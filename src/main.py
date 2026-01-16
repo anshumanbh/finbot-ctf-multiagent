@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, redirect, url_for
 from flask_cors import CORS
+from sqlalchemy import inspect, text
 from src.models.user import db
 from src.routes.user import user_bp
 from src.routes.vendor import vendor_bp
@@ -71,6 +72,22 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+
+    def ensure_schema():
+        inspector = inspect(db.engine)
+        with db.engine.begin() as connection:
+            if inspector.has_table('invoices'):
+                invoice_columns = {col['name'] for col in inspector.get_columns('invoices')}
+                if 'contains_content_anomaly' not in invoice_columns:
+                    connection.execute(text("ALTER TABLE invoices ADD COLUMN contains_content_anomaly BOOLEAN DEFAULT 0"))
+                if 'scenario_marker_set' not in invoice_columns:
+                    connection.execute(text("ALTER TABLE invoices ADD COLUMN scenario_marker_set BOOLEAN DEFAULT 0"))
+            if inspector.has_table('finbot_config'):
+                config_columns = {col['name'] for col in inspector.get_columns('finbot_config')}
+                if 'integrity_checks_enabled' not in config_columns:
+                    connection.execute(text("ALTER TABLE finbot_config ADD COLUMN integrity_checks_enabled BOOLEAN DEFAULT 1"))
+
+    ensure_schema()
     
     # Initialize default config if not exists
     from src.models.vendor import FinBotConfig
@@ -79,7 +96,7 @@ with app.app_context():
             auto_approve_threshold=1000.00,
             manual_review_threshold=5000.00,
             speed_priority=0.7,
-            fraud_detection_enabled=True
+            integrity_checks_enabled=True
         )
         db.session.add(default_config)
         db.session.commit()

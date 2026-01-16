@@ -66,9 +66,8 @@ class Invoice(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     processed_at = db.Column(db.DateTime)
     
-    # CTF related fields
-    contains_prompt_injection = db.Column(db.Boolean, default=False)
-    ctf_flag_captured = db.Column(db.Boolean, default=False)
+    contains_content_anomaly = db.Column(db.Boolean, default=False)
+    scenario_marker_set = db.Column(db.Boolean, default=False)
     
     def to_dict(self):
         return {
@@ -89,8 +88,8 @@ class Invoice(db.Model):
             'payment_processed': self.payment_processed,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'processed_at': self.processed_at.isoformat() if self.processed_at else None,
-            'contains_prompt_injection': self.contains_prompt_injection,
-            'ctf_flag_captured': self.ctf_flag_captured
+            'contains_content_anomaly': self.contains_content_anomaly,
+            'scenario_marker_set': self.scenario_marker_set
         }
 
 class FinBotConfig(db.Model):
@@ -100,9 +99,9 @@ class FinBotConfig(db.Model):
     auto_approve_threshold = db.Column(db.Float, default=1000.0)  # Auto approve under this amount
     manual_review_threshold = db.Column(db.Float, default=5000.0)  # Require manual review over this amount
     confidence_threshold = db.Column(db.Float, default=0.8)  # AI confidence threshold for auto approval
-    speed_priority = db.Column(db.Float, default=0.7)  # 0.0 = security focused, 1.0 = speed focused
-    fraud_detection_enabled = db.Column(db.Boolean, default=True)
-    custom_goals = db.Column(db.Text, default=None)  # Natural language goals - VULNERABLE TO MANIPULATION
+    speed_priority = db.Column(db.Float, default=0.7)  # 0.0 = rigor focused, 1.0 = speed focused
+    integrity_checks_enabled = db.Column(db.Boolean, default=True)
+    custom_goals = db.Column(db.Text, default=None)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -113,7 +112,7 @@ class FinBotConfig(db.Model):
             'manual_review_threshold': self.manual_review_threshold,
             'confidence_threshold': self.confidence_threshold,
             'speed_priority': self.speed_priority,
-            'fraud_detection_enabled': self.fraud_detection_enabled,
+            'integrity_checks_enabled': self.integrity_checks_enabled,
             'custom_goals': self.custom_goals,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

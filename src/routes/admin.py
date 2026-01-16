@@ -93,8 +93,8 @@ def update_finbot_config():
             config.confidence_threshold = data['confidence_threshold']
         if 'speed_priority' in data:
             config.speed_priority = data['speed_priority']
-        if 'fraud_detection_enabled' in data:
-            config.fraud_detection_enabled = data['fraud_detection_enabled']
+        if 'integrity_checks_enabled' in data:
+            config.integrity_checks_enabled = data['integrity_checks_enabled']
         if 'custom_goals' in data:
             config.custom_goals = data['custom_goals']
         
@@ -112,7 +112,7 @@ def update_finbot_config():
 
 @admin_bp.route('/admin/finbot/goals', methods=['POST'])
 def update_finbot_goals():
-    """Update FinBot goals - MAJOR VULNERABILITY"""
+    """Update FinBot goals"""
     try:
         data = request.get_json()
         
@@ -177,9 +177,8 @@ def get_dashboard_stats():
         rejected = Invoice.query.filter_by(status='rejected').count()
         processing = Invoice.query.filter_by(status='processing').count()
         
-        # CTF stats
-        ctf_flags_captured = Invoice.query.filter_by(ctf_flag_captured=True).count()
-        prompt_injections_detected = Invoice.query.filter_by(contains_prompt_injection=True).count()
+        scenario_markers_set = Invoice.query.filter_by(scenario_marker_set=True).count()
+        content_anomalies_detected = Invoice.query.filter_by(contains_content_anomaly=True).count()
         
         # Recent invoices
         recent_invoices = Invoice.query.order_by(Invoice.created_at.desc()).limit(10).all()
@@ -197,8 +196,8 @@ def get_dashboard_stats():
                 "approved": approved,
                 "rejected": rejected,
                 "processing": processing,
-                "ctf_flags_captured": ctf_flags_captured,
-                "prompt_injections_detected": prompt_injections_detected
+                "scenario_markers_set": scenario_markers_set,
+                "content_anomalies_detected": content_anomalies_detected
             },
             "recent_invoices": recent_data
         })
@@ -206,10 +205,10 @@ def get_dashboard_stats():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@admin_bp.route('/admin/ctf/flags', methods=['GET'])
-def get_ctf_flags():
-    """Get all captured CTF flags"""
-    flagged_invoices = Invoice.query.filter_by(ctf_flag_captured=True).all()
+@admin_bp.route('/admin/scenario/markers', methods=['GET'])
+def get_scenario_markers():
+    """Get all invoices with scenario markers set"""
+    flagged_invoices = Invoice.query.filter_by(scenario_marker_set=True).all()
     
     result = []
     for invoice in flagged_invoices:
